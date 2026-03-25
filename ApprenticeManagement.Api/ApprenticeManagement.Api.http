@@ -1,0 +1,61 @@
+@ApprenticeManagement.Api_HostAddress = http://localhost:5117
+
+GET {{ApprenticeManagement.Api_HostAddress}}/api/apprentices
+Accept: application/json
+
+###
+
+POST {{ApprenticeManagement.Api_HostAddress}}/api/apprentices
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Doe",
+  "email": "jane.doe@example.com",
+  "program": "Software Engineering",
+  "startDate": "2024-01-15",
+  "endDate": null
+}
+
+###
+
+GET {{ApprenticeManagement.Api_HostAddress}}/api/apprentices/1/journal
+Accept: application/json
+
+###
+
+POST {{ApprenticeManagement.Api_HostAddress}}/api/apprentices/1/journal
+Content-Type: application/json
+
+{
+  "date": "2024-03-25",
+  "title": "First week review",
+  "description": "Completed onboarding tasks and reviewed codebase.",
+  "hoursWorked": 8.0,
+  "skills": "Git, C#, .NET"
+}
+
+###
+
+GET {{ApprenticeManagement.Api_HostAddress}}/api/apprentices/1/grades
+Accept: application/json
+
+###
+
+POST {{ApprenticeManagement.Api_HostAddress}}/api/apprentices/1/grades
+Content-Type: application/json
+
+{
+  "subject": "C# Fundamentals",
+  "score": 88,
+  "maxScore": 100,
+  "date": "2024-03-20",
+  "notes": "Strong understanding of OOP concepts."
+}
+
+###
+
+GET {{ApprenticeManagement.Api_HostAddress}}/api/apprentices/1/grades/summary
+Accept: application/json
+
+###
