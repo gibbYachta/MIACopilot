@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ApprenticeManagement.Api/ApprenticeManagement.Api.csproj" />
+  <Project Path="ApprenticeManagement.Tests/ApprenticeManagement.Tests.csproj" />
+</Solution>
