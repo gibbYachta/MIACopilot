@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apprentice Management System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --danger: #ef4444;
+      --danger-dark: #b91c1c;
+      --success: #22c55e;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --radius: 10px;
+      --shadow: 0 1px 4px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Layout ── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      height: 56px;
+      box-shadow: 0 2px 8px rgba(79,70,229,.25);
+    }
+    header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -.3px; }
+
+    .layout { display: flex; min-height: calc(100vh - 56px); }
+
+    aside {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+    aside nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 500;
+      transition: background .15s, color .15s;
+    }
+    aside nav a:hover { background: var(--primary-light); color: var(--primary); }
+    aside nav a.active { background: var(--primary-light); color: var(--primary); border-right: 3px solid var(--primary); }
+
+    main { flex: 1; padding: 28px; overflow-y: auto; }
+
+    /* ── Cards / Tables ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .card-title { font-size: 1.05rem; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; }
+    td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f8fafc; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 7px;
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-danger { background: var(--danger); color: #fff; font-size: .8rem; padding: 5px 11px; }
+    .btn-danger:hover { background: var(--danger-dark); }
+    .btn-secondary { background: #f1f5f9; color: var(--text); }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-icon { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 9px; border-radius: 6px; font-size: .85rem; }
+    .btn-icon:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+    .btn-row { display: flex; gap: 6px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 99px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #15803d; }
+    .badge-yellow { background: #fef9c3; color: #854d0e; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      width: min(520px, 95vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      animation: pop .18s ease;
+    }
+    @keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 1rem; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 1.3rem; cursor: pointer; color: var(--muted); line-height: 1; }
+    .modal-close:hover { color: var(--text); }
+    .modal-body { padding: 20px 22px; }
+    .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+    .form-control {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      font-size: .9rem;
+      color: var(--text);
+      background: #fff;
+      transition: border .15s, box-shadow .15s;
+    }
+    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,.12); }
+    textarea.form-control { resize: vertical; min-height: 72px; }
+
+    /* ── Breadcrumb / detail header ── */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 14px;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .detail-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 2px; }
+    .detail-sub { color: var(--muted); font-size: .9rem; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 2px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    .tab {
+      padding: 8px 18px;
+      border: none;
+      background: none;
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab:hover:not(.active) { color: var(--text); }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .stat-label { font-size: .75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 9px;
+      font-size: .875rem;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      z-index: 999;
+      display: none;
+      animation: slideUp .2s ease;
+    }
+    #toast.show { display: block; }
+    @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* ── Misc ── */
+    .empty { text-align: center; color: var(--muted); padding: 48px 0; font-size: .95rem; }
+    .section-hidden { display: none; }
+    .text-right { text-align: right; }
+    .text-muted { color: var(--muted); }
+    .mt-1 { margin-top: 6px; }
+    .pct-bar { background: var(--border); border-radius: 99px; height: 6px; margin-top: 4px; }
+    .pct-fill { height: 100%; border-radius: 99px; background: var(--primary); }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎓 Apprentice Management System</h1>
+</header>
+
+<div class="layout">
+  <aside>
+    <nav>
+      <a href="#" data-view="apprentices" class="active">👥 Apprentices</a>
+    </nav>
+  </aside>
+
+  <main id="main-content">
+    <!-- Apprentices list view -->
+    <section id="view-apprentices">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Apprentices</span>
+          <button class="btn btn-primary" onclick="openApprenticeModal()">+ Add Apprentice</button>
+        </div>
+        <table id="apprentices-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Program</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="apprentices-body">
+            <tr><td colspan="6" class="empty">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Apprentice detail view -->
+    <section id="view-detail" class="section-hidden">
+      <a class="back-link" onclick="showView('apprentices')">← Back to Apprentices</a>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <div>
+            <div class="detail-name" id="detail-name"></div>
+            <div class="detail-sub" id="detail-sub"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-secondary" onclick="openApprenticeModal(currentApprentice)">✏️ Edit</button>
+            <button class="btn btn-danger" onclick="deleteApprentice(currentApprentice.id)">🗑 Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="journal" onclick="switchTab('journal')">📓 Work Journal</button>
+        <button class="tab" data-tab="grades" onclick="switchTab('grades')">📊 Grades</button>
+      </div>
+
+      <!-- Journal tab -->
+      <div id="tab-journal">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Work Journal</span>
+            <button class="btn btn-primary" onclick="openJournalModal()">+ Add Entry</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Title</th><th>Hours</th><th>Skills</th><th></th></tr>
+            </thead>
+            <tbody id="journal-body">
+              <tr><td colspan="5" class="empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Grades tab -->
+      <div id="tab-grades" class="section-hidden">
+        <div class="stats-grid" id="grade-stats"></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Grades</span>
+            <button class="btn btn-primary" onclick="openGradeModal()">+ Add Grade</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Subject</th><th>Score</th><th>%</th><th>Date</th><th>Notes</th><th></th></tr>
+            </thead>
+            <tbody id="grades-body">
+              <tr><td colspan="6" class="empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ══════════════════════ Modals ══════════════════════ -->
+
+<!-- Apprentice modal -->
+<div class="modal-overlay" id="modal-apprentice">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-apprentice-title">Add Apprentice</span>
+      <button class="modal-close" onclick="closeModal('modal-apprentice')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input class="form-control" id="a-firstName" placeholder="Jane" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input class="form-control" id="a-lastName" placeholder="Doe" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" id="a-email" type="email" placeholder="jane@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Program</label>
+        <input class="form-control" id="a-program" placeholder="Software Engineering" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Start Date</label>
+        <input class="form-control" id="a-startDate" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Date (optional)</label>
+        <input class="form-control" id="a-endDate" type="date" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-apprentice')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveApprentice()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Journal modal -->
+<div class="modal-overlay" id="modal-journal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-journal-title">Add Journal Entry</span>
+      <button class="modal-close" onclick="closeModal('modal-journal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-control" id="j-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input class="form-control" id="j-title" placeholder="What did you work on?" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" id="j-description" placeholder="Describe your activities…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hours Worked</label>
+        <input class="form-control" id="j-hours" type="number" min="0" step="0.5" placeholder="8" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Skills (optional)</label>
+        <input class="form-control" id="j-skills" placeholder="Python, SQL, Communication…" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-journal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveJournalEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Grade modal -->
+<div class="modal-overlay" id="modal-grade">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-grade-title">Add Grade</span>
+      <button class="modal-close" onclick="closeModal('modal-grade')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Subject</label>
+        <input class="form-control" id="g-subject" placeholder="Mathematics" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Score</label>
+        <input class="form-control" id="g-score" type="number" min="0" step="0.5" placeholder="85" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Max Score</label>
+        <input class="form-control" id="g-maxScore" type="number" min="1" step="0.5" placeholder="100" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-control" id="g-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea class="form-control" id="g-notes" placeholder="Additional notes…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-grade')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGrade()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  // ══════════════════════════════════════════════
+  // Configuration
+  // ══════════════════════════════════════════════
+  const API = '';  // same-origin – served by the ASP.NET backend
+
+  // ══════════════════════════════════════════════
+  // State
+  // ══════════════════════════════════════════════
+  let currentApprentice = null;
+  let editingApprenticeId = null;
+  let editingJournalId = null;
+  let editingGradeId = null;
+  let currentTab = 'journal';
+
+  // ══════════════════════════════════════════════
+  // Utilities
+  // ══════════════════════════════════════════════
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  async function apiFetch(path, options = {}) {
+    const res = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || res.statusText);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  function pctBadge(pct) {
+    if (pct >= 80) return `<span class="badge badge-green">${pct.toFixed(1)}%</span>`;
+    if (pct >= 60) return `<span class="badge badge-yellow">${pct.toFixed(1)}%</span>`;
+    return `<span class="badge badge-red">${pct.toFixed(1)}%</span>`;
+  }
+
+  // ══════════════════════════════════════════════
+  // View management
+  // ══════════════════════════════════════════════
+  function showView(name) {
+    document.getElementById('view-apprentices').classList.toggle('section-hidden', name !== 'apprentices');
+    document.getElementById('view-detail').classList.toggle('section-hidden', name !== 'detail');
+    if (name === 'apprentices') loadApprentices();
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    document.getElementById('tab-journal').classList.toggle('section-hidden', tab !== 'journal');
+    document.getElementById('tab-grades').classList.toggle('section-hidden', tab !== 'grades');
+    if (tab === 'journal') loadJournal(currentApprentice.id);
+    if (tab === 'grades') loadGrades(currentApprentice.id);
+  }
+
+  // ══════════════════════════════════════════════
+  // Modal helpers
+  // ══════════════════════════════════════════════
+  function openModal(id) { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  // Close on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+  });
+
+  // ══════════════════════════════════════════════
+  // Apprentices
+  // ══════════════════════════════════════════════
+  async function loadApprentices() {
+    const body = document.getElementById('apprentices-body');
+    try {
+      const data = await apiFetch('/api/apprentices');
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="6" class="empty">No apprentices yet. Click "+ Add Apprentice" to get started.</td></tr>';
+        return;
+      }
+      body.innerHTML = data.map(a => `
+        <tr>
+          <td><strong>${esc(a.firstName)} ${esc(a.lastName)}</strong></td>
+          <td class="text-muted">${esc(a.email)}</td>
+          <td><span class="badge badge-blue">${esc(a.program)}</span></td>
+          <td>${fmtDate(a.startDate)}</td>
+          <td>${fmtDate(a.endDate)}</td>
+          <td class="text-right">
+            <div class="btn-row">
+              <button class="btn btn-icon" onclick='openDetail(${JSON.stringify(a)})'>View</button>
+              <button class="btn btn-icon" onclick='openApprenticeModal(${JSON.stringify(a)})'>Edit</button>
+              <button class="btn btn-danger" onclick="deleteApprentice(${a.id})">Delete</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    } catch (e) {
+      body.innerHTML = `<tr><td colspan="6" class="empty" style="color:#ef4444">Failed to load apprentices: ${esc(e.message)}</td></tr>`;
+    }
+  }
+
+  function openApprenticeModal(apprentice = null) {
+    editingApprenticeId = apprentice ? apprentice.id : null;
+    document.getElementById('modal-apprentice-title').textContent = apprentice ? 'Edit Apprentice' : 'Add Apprentice';
+    document.getElementById('a-firstName').value = apprentice?.firstName ?? '';
+    document.getElementById('a-lastName').value = apprentice?.lastName ?? '';
+    document.getElementById('a-email').value = apprentice?.email ?? '';
+    document.getElementById('a-program').value = apprentice?.program ?? '';
+    document.getElementById('a-startDate').value = apprentice?.startDate ?? '';
+    document.getElementById('a-endDate').value = apprentice?.endDate ?? '';
+    openModal('modal-apprentice');
+  }
+
+  async function saveApprentice() {
+    const body = {
+      firstName: document.getElementById('a-firstName').value.trim(),
+      lastName: document.getElementById('a-lastName').value.trim(),
+      email: document.getElementById('a-email').value.trim(),
+      program: document.getElementById('a-program').value.trim(),
+      startDate: document.getElementById('a-startDate').value,
+      endDate: document.getElementById('a-endDate').value || null,
+    };
+    if (!body.firstName || !body.lastName || !body.email || !body.program || !body.startDate) {
+      toast('Please fill in all required fields.'); return;
+    }
+    try {
+      if (editingApprenticeId) {
+        await apiFetch(`/api/apprentices/${editingApprenticeId}`, { method: 'PUT', body: JSON.stringify(body) });
+        toast('Apprentice updated.');
+      } else {
+        await apiFetch('/api/apprentices', { method: 'POST', body: JSON.stringify(body) });
+        toast('Apprentice created.');
+      }
+      closeModal('modal-apprentice');
+      // Refresh the right view
+      if (editingApprenticeId && currentApprentice?.id === editingApprenticeId) {
+        const updated = await apiFetch(`/api/apprentices/${editingApprenticeId}`);
+        currentApprentice = updated;
+        document.getElementById('detail-name').textContent = `${updated.firstName} ${updated.lastName}`;
+        document.getElementById('detail-sub').textContent = `${updated.program} · ${updated.email}`;
+      } else {
+        loadApprentices();
+      }
+    } catch (e) {
+      toast('Error: ' + e.message);
+    }
+  }
+
+  async function deleteApprentice(id) {
+    if (!confirm('Delete this apprentice and all their records?')) return;
+    try {
+      await apiFetch(`/api/apprentices/${id}`, { method: 'DELETE' });
+      toast('Apprentice deleted.');
+      showView('apprentices');
+    } catch (e) {
+      toast('Error: ' + e.message);
+    }
+  }
+
+  function openDetail(apprentice) {
+    currentApprentice = apprentice;
+    document.getElementById('detail-name').textContent = `${apprentice.firstName} ${apprentice.lastName}`;
+    document.getElementById('detail-sub').textContent = `${apprentice.program} · ${apprentice.email}`;
+    showView('detail');
+    switchTab('journal');
+  }
+
+  // ══════════════════════════════════════════════
+  // Work Journal
+  // ══════════════════════════════════════════════
+  async function loadJournal(apprenticeId) {
+    const body = document.getElementById('journal-body');
+    try {
+      const data = await apiFetch(`/api/apprentices/${apprenticeId}/journal`);
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="5" class="empty">No journal entries yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = data.map(e => `
+        <tr>
+          <td>${fmtDate(e.date)}</td>
+          <td><strong>${esc(e.title)}</strong><br/><span class="text-muted" style="font-size:.8rem">${esc(e.description).substring(0,80)}${e.description.length > 80 ? '…' : ''}</span></td>
+          <td><span class="badge badge-blue">${e.hoursWorked}h</span></td>
+          <td class="text-muted" style="font-size:.82rem">${esc(e.skills ?? '—')}</td>
+          <td class="text-right">
+            <div class="btn-row">
+              <button class="btn btn-icon" onclick='openJournalModal(${JSON.stringify(e)})'>Edit</button>
+              <button class="btn btn-danger" onclick="deleteJournalEntry(${e.id})">Delete</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    } catch (e) {
+      body.innerHTML = `<tr><td colspan="5" class="empty" style="color:#ef4444">Failed to load journal: ${esc(e.message)}</td></tr>`;
+    }
+  }
+
+  function openJournalModal(entry = null) {
+    editingJournalId = entry ? entry.id : null;
+    document.getElementById('modal-journal-title').textContent = entry ? 'Edit Journal Entry' : 'Add Journal Entry';
+    document.getElementById('j-date').value = entry?.date ?? new Date().toISOString().slice(0, 10);
+    document.getElementById('j-title').value = entry?.title ?? '';
+    document.getElementById('j-description').value = entry?.description ?? '';
+    document.getElementById('j-hours').value = entry?.hoursWorked ?? '';
+    document.getElementById('j-skills').value = entry?.skills ?? '';
+    openModal('modal-journal');
+  }
+
+  async function saveJournalEntry() {
+    const id = currentApprentice.id;
+    const body = {
+      date: document.getElementById('j-date').value,
+      title: document.getElementById('j-title').value.trim(),
+      description: document.getElementById('j-description').value.trim(),
+      hoursWorked: parseFloat(document.getElementById('j-hours').value),
+      skills: document.getElementById('j-skills').value.trim() || null,
+    };
+    if (!body.date || !body.title || !body.description || isNaN(body.hoursWorked)) {
+      toast('Please fill in all required fields.'); return;
+    }
+    try {
+      if (editingJournalId) {
+        await apiFetch(`/api/apprentices/${id}/journal/${editingJournalId}`, { method: 'PUT', body: JSON.stringify(body) });
+        toast('Entry updated.');
+      } else {
+        await apiFetch(`/api/apprentices/${id}/journal`, { method: 'POST', body: JSON.stringify(body) });
+        toast('Entry added.');
+      }
+      closeModal('modal-journal');
+      loadJournal(id);
+    } catch (e) {
+      toast('Error: ' + e.message);
+    }
+  }
+
+  async function deleteJournalEntry(entryId) {
+    if (!confirm('Delete this journal entry?')) return;
+    try {
+      await apiFetch(`/api/apprentices/${currentApprentice.id}/journal/${entryId}`, { method: 'DELETE' });
+      toast('Entry deleted.');
+      loadJournal(currentApprentice.id);
+    } catch (e) {
+      toast('Error: ' + e.message);
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // Grades
+  // ══════════════════════════════════════════════
+  async function loadGrades(apprenticeId) {
+    const body = document.getElementById('grades-body');
+    const statsEl = document.getElementById('grade-stats');
+    try {
+      const [grades, summary] = await Promise.all([
+        apiFetch(`/api/apprentices/${apprenticeId}/grades`),
+        apiFetch(`/api/apprentices/${apprenticeId}/grades/summary`).catch(() => null),
+      ]);
+
+      if (summary) {
+        statsEl.innerHTML = `
+          <div class="stat-card">
+            <div class="stat-label">Average</div>
+            <div class="stat-value">${summary.averagePercentage.toFixed(1)}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Highest</div>
+            <div class="stat-value">${summary.highestPercentage.toFixed(1)}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Lowest</div>
+            <div class="stat-value">${summary.lowestPercentage.toFixed(1)}%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Grades</div>
+            <div class="stat-value">${summary.totalGrades}</div>
+          </div>`;
+      } else {
+        statsEl.innerHTML = '';
+      }
+
+      if (!grades.length) {
+        body.innerHTML = '<tr><td colspan="6" class="empty">No grades yet.</td></tr>';
+        return;
+      }
+      body.innerHTML = grades.map(g => `
+        <tr>
+          <td><strong>${esc(g.subject)}</strong></td>
+          <td>${g.score} / ${g.maxScore}</td>
+          <td>
+            ${pctBadge(g.percentage)}
+            <div class="pct-bar"><div class="pct-fill" style="width:${Math.min(g.percentage,100)}%"></div></div>
+          </td>
+          <td>${fmtDate(g.date)}</td>
+          <td class="text-muted" style="font-size:.82rem">${esc(g.notes ?? '—')}</td>
+          <td class="text-right">
+            <div class="btn-row">
+              <button class="btn btn-icon" onclick='openGradeModal(${JSON.stringify(g)})'>Edit</button>
+              <button class="btn btn-danger" onclick="deleteGrade(${g.id})">Delete</button>
+            </div>
+          </td>
+        </tr>`).join('');
+    } catch (e) {
+      body.innerHTML = `<tr><td colspan="6" class="empty" style="color:#ef4444">Failed to load grades: ${esc(e.message)}</td></tr>`;
+    }
+  }
+
+  function openGradeModal(grade = null) {
+    editingGradeId = grade ? grade.id : null;
+    document.getElementById('modal-grade-title').textContent = grade ? 'Edit Grade' : 'Add Grade';
+    document.getElementById('g-subject').value = grade?.subject ?? '';
+    document.getElementById('g-score').value = grade?.score ?? '';
+    document.getElementById('g-maxScore').value = grade?.maxScore ?? 100;
+    document.getElementById('g-date').value = grade?.date ?? new Date().toISOString().slice(0, 10);
+    document.getElementById('g-notes').value = grade?.notes ?? '';
+    openModal('modal-grade');
+  }
+
+  async function saveGrade() {
+    const id = currentApprentice.id;
+    const body = {
+      subject: document.getElementById('g-subject').value.trim(),
+      score: parseFloat(document.getElementById('g-score').value),
+      maxScore: parseFloat(document.getElementById('g-maxScore').value),
+      date: document.getElementById('g-date').value,
+      notes: document.getElementById('g-notes').value.trim() || null,
+    };
+    if (!body.subject || isNaN(body.score) || isNaN(body.maxScore) || !body.date) {
+      toast('Please fill in all required fields.'); return;
+    }
+    try {
+      if (editingGradeId) {
+        await apiFetch(`/api/apprentices/${id}/grades/${editingGradeId}`, { method: 'PUT', body: JSON.stringify(body) });
+        toast('Grade updated.');
+      } else {
+        await apiFetch(`/api/apprentices/${id}/grades`, { method: 'POST', body: JSON.stringify(body) });
+        toast('Grade added.');
+      }
+      closeModal('modal-grade');
+      loadGrades(id);
+    } catch (e) {
+      toast('Error: ' + e.message);
+    }
+  }
+
+  async function deleteGrade(gradeId) {
+    if (!confirm('Delete this grade?')) return;
+    try {
+      await apiFetch(`/api/apprentices/${currentApprentice.id}/grades/${gradeId}`, { method: 'DELETE' });
+      toast('Grade deleted.');
+      loadGrades(currentApprentice.id);
+    } catch (e) {
+      toast('Error: ' + e.message);
+    }
+  }
+
+  // ══════════════════════════════════════════════
+  // XSS protection helper
+  // ══════════════════════════════════════════════
+  function esc(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ══════════════════════════════════════════════
+  // Init
+  // ══════════════════════════════════════════════
+  loadApprentices();
+</script>
+</body>
+</html>
